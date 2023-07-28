@@ -8,7 +8,7 @@ These instructions will guide you for building up Camflow in Android environment
 
 ### Prerequisites
 
-- [Android Cuttlefish](https://source.android.com/docs/setup/create/cuttlefish): a configurable virtual Android device that replicates the framework-based behavior of a real device.
+- [Android Cuttlefish Virtual Device](https://source.android.com/docs/setup/create/cuttlefish): a configurable virtual Android device that replicates the framework-based behavior of a real device.
 - [Android Kernel](https://source.android.com/docs/setup/build/building-kernels): build Android Kernel with Camflow patch. It installs the kernel part of Camflow provenance system. The Android kernel branch used is `common-android13-5.15-lts`.
 - [Android Studio](https://developer.android.com/studio): Camflow Android user-space daemons are compiled and built in Android Studio.
 - [Camflow](https://github.com/CamFlow/camflow-dev/releases/tag/v0.8.0): the kernel patch part of Camflow used in Android Camflow is **v0.8.0**. The modified userspace Camflow deamons are inclued in this repo and should be built in Android studio using `android-ndk-r23b`.
@@ -20,6 +20,7 @@ A step by step guide of setting up Camflow Android Provenance System on Android 
 ---
 #### Set Up Android Cuttlefish
 > For the lastest instructions, check: https://android.googlesource.com/device/google/cuttlefish/
+
 ##### Step 1: In Linux desktop or virtual machine, make sure virtualization with KVM is available
 
 ```bash
@@ -49,7 +50,6 @@ This script installs the Android Cuttlefish environment on a Linux-based system.
 
 -  **OTA** (Over-The-Air) image:  this file is a system image for the Cuttlefish Virtual Device (CVD), which is a part of AOSP.
 -  **Host package**: this file is a host package for Cuttlefish. It includes binaries and scripts that need to be run on the host machine to set up and run the Cuttlefish virtual device.
-
 
 1. Go to [http://ci.android.com/](http://ci.android.com/)
 2. Enter a branch name. Start with `aosp-master` if you don‘t know what you’re looking for
@@ -133,6 +133,15 @@ The option `j12` means that the sync operation will use 12 parallel threads or j
     git apply path/to/0001-information-flow.patch
     git apply path/to/0002-camflow.patch
     ```
+3. Configure the kernel configuration to ensure the camflow provenance LSM is properly loaded and is processed last
+	```bash
+	cd  android-kernel-5.15/common
+	make menuconfig
+	```
+	![camflow-config1](https://s2.loli.net/2023/07/29/uol1rChpDmw2Ls9.png)
+	![camflow-config2](https://s2.loli.net/2023/07/29/MaABjHfgT9mzusN.png)
+	![camflow-config3](https://s2.loli.net/2023/07/29/tLJuprdmaMlGkE6.png)
+	- Make sure the "provenance" is added at the end of enabled LSMs list
 
 ##### Step 4: Build the Android Kernel
 > Since Android 10, Android has introduced a new **[Generic Kernel Image(GKI)](https://source.android.com/devices/architecture/kernel/generic-kernel-image)** in kernel 4.19 and above. This means that the kernel building process has been divided into two parts: `Generic Kernel` and `Vendor Modules`. We have to build these two parts separately.
@@ -232,9 +241,22 @@ camconfd     camflow-cli     camflowd     camflowexample     libprovenance.so
 
 1. Move the userspace daemons and shared library to the Linux Desktop from Mac, assume all these five files are now moved to `/Downloads` folder on Linux Desktop
 2. Move the configuration files `camflow.ini` and `camflowd.ini` located at `camflow-config-files` folder in this repo to  `/Downloads` folder on Linux Desktop as well
+3. Navigate to `android-cuttlefish/cf`, enter the following commands to launch the Android virtual device with specified configurations
+	```bash
+	# stop the previous launched Android virtual device if there is any
+	HOME=$PWD ./bin/stop_cvd
+	```
+	```bash
+	# set DIST_FOLDER to the directory that contains bzImage and initramfs.img
+	DIST_FOLDER=$(readlink -f /path/to/android-kernel-5.15/vendor-build-output-x86)
+	```
+	```bash
+	# Launch Android cuttlefish with RAM 27GB, Disk Space 30GB, 1 CPU
+	HOME=${PWD} ./bin/launch_cvd -daemon -memory_mb 27000 -data_policy always_create -blank_data_image_mb 30000 -cpus 1 -initramfs_path "${DIST_FOLDER}"/initramfs.img -kernel_path "${DIST_FOLDER}"/bzImage
+	```
 3. Install the shared library and user-space daemons to Android Cuttlefish
-	> **Encapsulating and automating these commands in a Makefile is highly recommended**. Example of Makefile is provided at Appendix folder in this repo.
-	> .
+	> **Encapsulating and automating these commands in a Makefile is highly recommended**. Example of Makefile is provided at the appendix folder in this repo.
+	
     ```bash
     # remount Android cuttlefish device - need to install shared library
     ./bin/adb root
@@ -289,7 +311,7 @@ camconfd     camflow-cli     camflowd     camflowexample     libprovenance.so
 
 ## Running Tests
 
-This section provides a walk-through of the Camflow Android Provenance System test, assuming that the user has already completed the instructions described above.
+This section provides a walk-through of the Camflow Android Provenance System test, assuming that the user has already completed the instructions described above. Specifically, user should have already launched Android cuttlefish successfully, installed all user space daemons, shared library, and executed camconfd and camflowd to apply capture configurations and to generate provenance.
 
 ### Test 1: Get the provenance graph of an executable that opens and writes a file
 
@@ -352,5 +374,4 @@ This section provides a walk-through of the Camflow Android Provenance System te
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
 
