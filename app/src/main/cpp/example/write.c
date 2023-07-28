@@ -9,7 +9,7 @@ void create_file(const char* path) {
         return;
     }
 
-    const char* message = "Hello from C written by Michael Xi!";
+    const char* message = "Hope you have a great day!";
     fprintf(file, "%s \n", message);
     fclose(file);
 }
@@ -19,10 +19,10 @@ int main() {
         printf("Failed Tracking, error %d\n", errno);
         printf("%s\n\n",strerror(errno));
     }
-//    if(provenance_set_propagate(true)){
-//        printf("Failed propagate, error %d\n", errno);
-//        printf("%s\n\n",strerror(errno));
-//    }
+    if(provenance_set_propagate(true)){
+        printf("Failed propagate, error %d\n", errno);
+        printf("%s\n\n",strerror(errno));
+    }
     const char* path = "/data/local/tmp/HelloFromC.txt";
     create_file(path);
     return 0;
