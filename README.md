@@ -4,7 +4,7 @@
 
 ## Getting Started
 
-These instructions will guide you for building up Camflow in Android environment, including both kernel and user-space daemons build, for development and testing purposes. See deployment for notes on how to deploy the project on a live system, i.e. Android virtual device.
+These instructions will guide you through building and installing Camflow Android in an Android environment, specifically the Android Cuttlefish virtual device.
 
 ### Prerequisites
 
