@@ -20,8 +20,8 @@
 #include "threadpool/thpool.h"
 #include "libprovenance-include/provenance.h"
 
-#define RUN_PID_FILE "/data/local/tmp/provenance-service.pid"
-#define NUMBER_CPUS           256 /* support 256 core max */
+#define RUN_PID_FILE          "/data/local/tmp/provenance-service.pid"
+#define NUMBER_CPUS           256   /* support 256 core max */
 
 /* internal variables */
 static struct provenance_ops prov_ops;
@@ -66,6 +66,20 @@ int provenance_record_pid( void ){
     return err;
 }
 
+/**
+ * @brief Initializes the provenance relay registration
+ *
+ * This function performs several steps to set up the provenance relay:
+ * 1. Sets the provenance of the current process to be opaque, so it does not appear in trace.
+ * 2. Copies the provenance operations pointers from the argument to a global structure.
+ * 3. Retrieves the number of cpus and validates that it does not exceed a maximum limit.
+ * 4. Opens the provenance relay files for reading.
+ * 5. Creates a worker pool to handle the reading jobs from the relay files.
+ *
+ * @param ops - A pointer to the structure containing the provenance operations
+ *
+ * @return Returns 0 if the initialization is successful. Returns -1 if any step fails.
+ */
 int provenance_relay_register(struct provenance_ops* ops)
 {
     int err;
@@ -100,12 +114,21 @@ int provenance_relay_register(struct provenance_ops* ops)
 
 void provenance_relay_stop()
 {
-    running = 0; // worker thread will stop
+    running = 0;      // worker thread will stop
     sleep(1); // give them a bit of times
     close_files();
     destroy_worker_pool();
 }
 
+/**
+ * @brief Open the provenance relay files (channels) for reading.
+ *
+ * This function opens two types of provenance relay files: relay and long relay.
+ * There is one file per CPU, with the file name formed by appending the CPU number to a base path.
+ * Example filename: provenance0 for cpu0, provenance1 for cpu1, etc.
+ *
+ * @return Returns 0 if all files are successfully opened and -1 if any files cannot be opened.
+ */
 static int open_files(void)
 {
     int i;
@@ -151,6 +174,15 @@ struct job_parameters {
     size_t size;
 };
 
+/**
+ * @brief Initializes a thread pool and adds relayfs reader jobs to it.
+ *
+ * Each reader job is defined by a set of parameters, including the CPU number,
+ * a callback function, a file descriptor for the relay file associated with the CPU,
+ * and the size of the provenance element being read.
+ *
+ * @return Returns 0 on success
+ */
 static int create_worker_pool(void)
 {
     int i;
@@ -176,13 +208,21 @@ static int create_worker_pool(void)
 
 static void destroy_worker_pool(void)
 {
-    thpool_wait(worker_thpool); // wait for all jobs in queue to be finished
+    thpool_wait(worker_thpool);    // wait for all jobs in queue to be finished
     thpool_destroy(worker_thpool); // destory all worker threads
 }
 
 /* per worker thread initialised variable */
 static __thread int initialised=0;
 
+/**
+ * @brief Record a provenance relation based on its type.
+ *
+ * This function examines the type of a provenance relation element and calls
+ * the appropriate logging function.
+ *
+ * @param msg - A pointer to union prov_elt element
+ */
 void relation_record(union prov_elt *msg){
     uint64_t type = prov_type(msg);
 
@@ -202,6 +242,14 @@ void relation_record(union prov_elt *msg){
         record_error("Error: unknown relation type %llx\n", prov_type(msg));
 }
 
+/**
+ * @brief Records a provenance node based on its type.
+ *
+ * This function accepts a provenance node and determines its type by calling the prov_type()
+ * function. Depending on the type, it then forwards the node to the appropriate logging function.
+ *
+ * @param msg Pointer to the provenance node to be recorded.
+ */
 void node_record(union prov_elt *msg){
     switch(prov_type(msg)){
         case ENT_PROC:
@@ -252,7 +300,16 @@ void prov_record(union prov_elt* msg) {
         node_record(msg);
 }
 
-/* handle application callbacks */
+/**
+ * @brief Callback function executed on receiving a prov_elt union
+ *
+ * This function processes the prov_elt union received from a relay file read.
+ * It ensures the data is of correct size and forwards the provenance message
+ * to the appropriate handlers (initialisation, reception, filtering, and recording).
+ *
+ * @param data Pointer to the prov_elt union.
+ * @param prov_size The size of the prov_elt union.
+ */
 static void callback_job(void* data, const size_t prov_size)
 {
     union prov_elt* msg;
@@ -358,7 +415,18 @@ static void long_callback_job(void* data, const size_t prov_size)
     long_prov_record(msg);
 }
 
+/* buffer_size for each relayfs read, process 1000 prov_elt at each round */
 #define buffer_size(prov_size) (prov_size*1000)
+
+/**
+ * @brief This function ___read_relay reads data from a file descriptor, processes
+ * the data in chunks of prov_elt size, and then calls a callback function with
+ * each processed chunk.
+ *
+ * @param relay_file representing the file descriptor of relay file
+ * @param prov_size size of data chunks to be processed, i.e. size of union prov_elt
+ * @param callback function pointer that will be called for each processed data chunk
+ */
 static void ___read_relay(const int relay_file, const size_t prov_size, void (*callback)(void*, const size_t)){
     uint8_t *buf;
     uint8_t* entry;
@@ -387,6 +455,14 @@ static void ___read_relay(const int relay_file, const size_t prov_size, void (*c
     free(buf);
 }
 
+/**
+ * @brief Sets the CPU affinity of the current thread.
+ *
+ * @param core_id The ID of the core to which the current thread should be bound.
+ * This value should be between 0 and (ncpus - 1), where ncpus is the total number of available cpus.
+ *
+ * @return Returns 0 on success and -1 on error.
+ */
 static int set_thread_affinity(int core_id)
 {
     cpu_set_t cpuset;
@@ -408,7 +484,15 @@ static int set_thread_affinity(int core_id)
 #define POL_FLAG (POLLIN|POLLRDNORM|POLLERR)
 #define RELAY_POLL_TIMEOUT 1000L
 
-/* read from relayfs file */
+/**
+ *  @brief This function continuously monitors a relayfs file descriptor for POL_FLAG events, and processes the I/O when available.
+ *
+ *  It first sets CPU affinity of the current thread to the specified CPU, then enters a loop where it
+ *  waits for a specific time interval, polls a file descriptor for the occurrence of a specified event, and
+ *  processes the data using ___read_relay function. The loop continues until running set to false.
+ *
+ *  @param data: a point to reader job parameter, including fields: relayfs fd, prov_elt size, callback function that processes each prov_elt
+ */
 static void reader_job(void *data)
 {
     int rc;

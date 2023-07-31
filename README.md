@@ -8,6 +8,7 @@ These instructions will guide you through building and installing Camflow Androi
 
 ### Prerequisites
 
+- [Ubuntu 22.04.1](https://old-releases.ubuntu.com/releases/22.04.1/): the following installation instructions have been tested on the Ubuntu Linux distribution with version 22.04.1. It is encouraged to use the same environment.
 - [Android Cuttlefish Virtual Device](https://source.android.com/docs/setup/create/cuttlefish): a configurable virtual Android device that replicates the framework-based behavior of a real device.
 - [Android Kernel](https://source.android.com/docs/setup/build/building-kernels): build Android Kernel with Camflow patch. It installs the kernel part of Camflow provenance system. The Android kernel branch used is `common-android13-5.15-lts`.
 - [Android Studio](https://developer.android.com/studio): Camflow Android user-space daemons are compiled and built in Android Studio.
@@ -46,7 +47,7 @@ sudo reboot
 ```
 This script installs the Android Cuttlefish environment on a Linux-based system.
 
-##### Step 3: Download OTA images and host package of Android Cuttleish 
+##### Step 3: Download OTA images and host package of Android Cuttlefish 
 
 -  **OTA** (Over-The-Air) image:  this file is a system image for the Cuttlefish Virtual Device (CVD), which is a part of AOSP.
 -  **Host package**: this file is a host package for Cuttlefish. It includes binaries and scripts that need to be run on the host machine to set up and run the Cuttlefish virtual device.
@@ -57,7 +58,7 @@ This script installs the Android Cuttlefish environment on a Linux-based system.
 4. Click on `Artifacts`
 5. Scroll down to the **OTA** images. These packages look like `aosp_cf_x86_64_phone-img-xxxxxx.zip` -- it will always have `img` in the name. Download this file
 6. Scroll down to `cvd-host_package.tar.gz`. You should always download a **host package** from the same build as your images
-7. On your local system, combine the packages with following code
+7. On your local system, `cd /path/to/android-cuttlefish`, combine the packages with following code
    
     ```bash
     mkdir cf
@@ -70,7 +71,7 @@ This script installs the Android Cuttlefish environment on a Linux-based system.
 
 1. Launch cuttlefish virtual machine
     ```bash
-    $ HOME=$PWD ./bin/launch_cvd
+    HOME=$PWD ./bin/launch_cvd
     ```
 2. Enable cuttlefish root
     ```bash
@@ -318,51 +319,23 @@ This section provides a walk-through of the Camflow Android Provenance System te
 1. Run `camflowexample` located at `/data/loca/tmp` installed in the previous steps
     - In the `camflowexample` executable, it turns on the `track-me` bit, so that this process can be tracked.
     ```bash
+    # execute this command at /android-cuttlefish/cf
     ./bin/adb shell /data/local/tmp/camflowexample
     ```
 2. Check out the provenance log generated in `audit.log`
     ```bash
+    # enter the android cuttlefish commandline interface
+    ./bin/adb shell
+    cd /data/local/tmp
     vi audit.log
     ```
-    <details>
-    	<summary>Raw Provenance Log</summary>
-    	```
-    	{"type":"Entity","id":"EAAAAAAAABQFFQAAAAAAAAAAAAAAAAAAAQAAAAAAAAA=","annotations": {"object_id":"5381","object_type":"machine","boot_id":0,"cf:machine_id":"cf:0","version":1,"cf:date":"2023:07:24T15:23:35","cf:taint":"0","cf:jiffies":"0","cf:epoch":0,"u_sysname":"Linux","u_nodename":"(none)","u_release":"5.15.104-maybe-dirty","u_version":"#1 SMP PREEMPT Thu Jan 1 00:00:00 UTC 1970","u_machine":"x86_64","u_domainname":"(none)","k_version":"0.8.0","l_version":"v0.5.5"}}
-	{"type":"Entity","id":"EAAAAAAAABQFFQAAAAAAAAAAAAAykjc2AQAAAAAAAAA=","annotations": {"object_id":"5381","object_type":"machine","boot_id":0,"cf:machine_id":"cf:909611570","version":1,"cf:date":"2023:07:24T15:23:35","cf:taint":"0","cf:jiffies":"0","cf:epoch":0,"u_sysname":"Linux","u_nodename":"localhost","u_release":"5.15.104-maybe-dirty","u_version":"#1 SMP PREEMPT Thu Jan 1 00:00:00 UTC 1970","u_machine":"x86_64","u_domainname":"localdomain","k_version":"0.8.0","l_version":"v0.5.5"}}
-	{"type":"Entity","id":"EAAAAAAAABQFFQAAAAAAAAEAAAAykjc2AQAAAAAAAAA=","annotations": {"object_id":"5381","object_type":"machine","boot_id":1,"cf:machine_id":"cf:909611570","version":1,"cf:date":"2023:07:24T15:23:35","cf:taint":"0","cf:jiffies":"0","cf:epoch":0,"u_sysname":"Linux","u_nodename":"localhost","u_release":"5.15.104-maybe-dirty","u_version":"#1 SMP PREEMPT Thu Jan 1 00:00:00 UTC 1970","u_machine":"x86_64","u_domainname":"localdomain","k_version":"0.8.0","l_version":"v0.5.5"}}
-	{"type":"Entity","id":"AAEAAAAAACBSowEAAAAAAAEAAAAykjc2AAAAAAAAAAA=","annotations": {"object_id":"107346","object_type":"file","boot_id":1,"cf:machine_id":"cf:909611570","version":0,"cf:date":"2023:07:24T15:23:42","cf:taint":"0","cf:jiffies":"4295006389","cf:epoch":1,"uid":0,"gid":0,"mode":"0x81b6","secctx":"u:object_r:shell_data_file:s0","ino":4799,"uuid":"e3a9f2df-aaed-46c8-9593-f0262d475eb7"}}
-	{"type":"Activity","id":"AQAAAAAAAEAtowEAAAAAAAEAAAAykjc2AAAAAAAAAAA=","annotations": {"object_id":"107309","object_type":"task","boot_id":1,"cf:machine_id":"cf:909611570","version":0,"cf:date":"2023:07:24T15:23:42","cf:taint":"0","cf:jiffies":"4295006389","cf:epoch":1,"pid":2086,"vpid":2086,"utime":"1488","stime":"0","vm":"10822056","rss":"2580","hw_vm":"10822356","hw_rss":"2608","rbytes":"0","wbytes":"4096","cancel_wbytes":"0","utsns":4026531838,"ipcns":0,"mntns":4026532864,"pidns":4026531836,"netns":4026531840,"cgroupns":4026531835,"secctx":"u:object_r:unlabeled:s0"}}
-	{"type":"Used","from":"AQAAAAAAAEAtowEAAAAAAAEAAAAykjc2AAAAAAAAAAA=","to":"AAEAAAAAACBSowEAAAAAAAEAAAAykjc2AAAAAAAAAAA=","annotations": {"id":"gAAAAAAAIIABAAAAAAAAAAEAAAAykjc2AAAAAAAAAAA=","relation_id":"1","relation_type":"open","boot_id":1,"cf:machine_id":"cf:909611570","cf:date":"2023:07:24T15:23:42","epoch":1,"jiffies":"4295006389","allowed":"true","flags":"0","task_id":"107309","from_type":"task","to_type":"file"}}
-	{"type":"WasAssociatedWith","from":"AQAAAAAAAEAtowEAAAAAAAEAAAAykjc2AAAAAAAAAAA=","to":"EAAAAAAAABQFFQAAAAAAAAEAAAAykjc2AQAAAAAAAAA=","annotations": {"id":"AQAAAAAABIACAAAAAAAAAAEAAAAykjc2AAAAAAAAAAA=","relation_id":"2","relation_type":"ran_on","boot_id":1,"cf:machine_id":"cf:909611570","cf:date":"2023:07:24T15:23:42","epoch":1,"jiffies":"4295006389","allowed":"true","flags":"0","task_id":"107309","from_type":"task","to_type":"machine"}}
-	{"type":"Entity","id":"AAAIAAAAACAuowEAAAAAAAEAAAAykjc2AAAAAAAAAAA=","annotations": {"object_id":"107310","object_type":"process_memory","boot_id":1,"cf:machine_id":"cf:909611570","version":0,"cf:date":"2023:07:24T15:23:42","cf:taint":"0","cf:jiffies":"4295006389","cf:epoch":1,"uid":0,"gid":0,"tgid":2086,"secctx":"u:r:su:s0"}}
-	{"type":"WasGeneratedBy","from":"AAAIAAAAACAuowEAAAAAAAEAAAAykjc2AAAAAAAAAAA=","to":"AQAAAAAAAEAtowEAAAAAAAEAAAAykjc2AAAAAAAAAAA=","annotations": {"id":"gAAAAAAAQIADAAAAAAAAAAEAAAAykjc2AAAAAAAAAAA=","relation_id":"3","relation_type":"memory_write","boot_id":1,"cf:machine_id":"cf:909611570","cf:date":"2023:07:24T15:23:42","epoch":1,"jiffies":"4295006389","allowed":"true","flags":"0","task_id":"107309","from_type":"process_memory","to_type":"task"}}
-	{"type":"WasDerivedFrom","from":"AAAIAAAAACAuowEAAAAAAAEAAAAykjc2AAAAAAAAAAA=","to":"AABAAAAAACRMq8i4LBprnAEAAAAykjc2AAAAAAAAAAA=","annotations": {"id":"AQAAAAAAgIAEAAAAAAAAAAEAAAAykjc2AAAAAAAAAAA=","relation_id":"4","relation_type":"named","boot_id":1,"cf:machine_id":"cf:909611570","cf:date":"2023:07:24T15:23:42","epoch":1,"jiffies":"4295006406","allowed":"true","flags":"0","task_id":"107309","from_type":"process_memory","to_type":"path"}}
-	{"type":"WasDerivedFrom","from":"AAEAAAAAACBSowEAAAAAAAEAAAAykjc2AAAAAAAAAAA=","to":"AABAAAAAACTHrMjvSnm7vAEAAAAykjc2AAAAAAAAAAA=","annotations": {"id":"AQAAAAAAgIAFAAAAAAAAAAEAAAAykjc2AAAAAAAAAAA=","relation_id":"5","relation_type":"named","boot_id":1,"cf:machine_id":"cf:909611570","cf:date":"2023:07:24T15:23:42","epoch":1,"jiffies":"4295006409","allowed":"true","flags":"0","task_id":"107309","from_type":"file","to_type":"path"}}
-	{"type":"Activity","id":"AQAAAAAAAEAtowEAAAAAAAEAAAAykjc2AQAAAAAAAAA=","annotations": {"object_id":"107309","object_type":"task","boot_id":1,"cf:machine_id":"cf:909611570","version":1,"cf:date":"2023:07:24T15:23:42","cf:taint":"0","cf:jiffies":"4295006415","cf:epoch":1,"pid":2086,"vpid":2086,"utime":"11271","stime":"22418","vm":"10822056","rss":"2580","hw_vm":"10822356","hw_rss":"2608","rbytes":"0","wbytes":"4096","cancel_wbytes":"0","utsns":4026531838,"ipcns":0,"mntns":4026532864,"pidns":4026531836,"netns":4026531840,"cgroupns":4026531835,"secctx":"u:object_r:unlabeled:s0"}}
-	{"type":"WasInformedBy","from":"AQAAAAAAAEAtowEAAAAAAAEAAAAykjc2AQAAAAAAAAA=","to":"AQAAAAAAAEAtowEAAAAAAAEAAAAykjc2AAAAAAAAAAA=","annotations": {"id":"AgAAAAAAEIAGAAAAAAAAAAEAAAAykjc2AAAAAAAAAAA=","relation_id":"6","relation_type":"version_activity","boot_id":1,"cf:machine_id":"cf:909611570","cf:date":"2023:07:24T15:23:42","epoch":1,"jiffies":"4295006415","allowed":"true","flags":"0","task_id":"107309","from_type":"task","to_type":"task"}}
-	{"type":"Used","from":"AQAAAAAAAEAtowEAAAAAAAEAAAAykjc2AQAAAAAAAAA=","to":"AAEAAAAAACBSowEAAAAAAAEAAAAykjc2AAAAAAAAAAA=","annotations": {"id":"AAgAAAAAIIAHAAAAAAAAAAEAAAAykjc2AAAAAAAAAAA=","relation_id":"7","relation_type":"getattr","boot_id":1,"cf:machine_id":"cf:909611570","cf:date":"2023:07:24T15:23:42","epoch":1,"jiffies":"4295006415","allowed":"true","flags":"0","task_id":"107309","from_type":"task","to_type":"file"}}
-	{"type":"WasGeneratedBy","from":"AAAIAAAAACAuowEAAAAAAAEAAAAykjc2AAAAAAAAAAA=","to":"AQAAAAAAAEAtowEAAAAAAAEAAAAykjc2AQAAAAAAAAA=","annotations": {"id":"gAAAAAAAQIAIAAAAAAAAAAEAAAAykjc2AAAAAAAAAAA=","relation_id":"8","relation_type":"memory_write","boot_id":1,"cf:machine_id":"cf:909611570","cf:date":"2023:07:24T15:23:42","epoch":1,"jiffies":"4295006415","allowed":"true","flags":"0","task_id":"107309","from_type":"process_memory","to_type":"task"}}
-	{"type":"Activity","id":"AQAAAAAAAEAtowEAAAAAAAEAAAAykjc2AgAAAAAAAAA=","annotations": {"object_id":"107309","object_type":"task","boot_id":1,"cf:machine_id":"cf:909611570","version":2,"cf:date":"2023:07:24T15:23:42","cf:taint":"0","cf:jiffies":"4295006423","cf:epoch":1,"pid":2086,"vpid":2086,"utime":"12846","stime":"38562","vm":"10822056","rss":"2580","hw_vm":"10822356","hw_rss":"2608","rbytes":"0","wbytes":"4096","cancel_wbytes":"0","utsns":4026531838,"ipcns":0,"mntns":4026532864,"pidns":4026531836,"netns":4026531840,"cgroupns":4026531835,"secctx":"u:object_r:unlabeled:s0"}}
-	{"type":"WasInformedBy","from":"AQAAAAAAAEAtowEAAAAAAAEAAAAykjc2AgAAAAAAAAA=","to":"AQAAAAAAAEAtowEAAAAAAAEAAAAykjc2AQAAAAAAAAA=","annotations": {"id":"AgAAAAAAEIAJAAAAAAAAAAEAAAAykjc2AAAAAAAAAAA=","relation_id":"9","relation_type":"version_activity","boot_id":1,"cf:machine_id":"cf:909611570","cf:date":"2023:07:24T15:23:42","epoch":1,"jiffies":"4295006423","allowed":"true","flags":"0","task_id":"107309","from_type":"task","to_type":"task"}}
-	{"type":"Used","from":"AQAAAAAAAEAtowEAAAAAAAEAAAAykjc2AgAAAAAAAAA=","to":"AAAIAAAAACAuowEAAAAAAAEAAAAykjc2AAAAAAAAAAA=","annotations": {"id":"BAAAAAAAIIAKAAAAAAAAAAEAAAAykjc2AAAAAAAAAAA=","relation_id":"10","relation_type":"memory_read","boot_id":1,"cf:machine_id":"cf:909611570","cf:date":"2023:07:24T15:23:42","epoch":1,"jiffies":"4295006423","allowed":"true","flags":"0","task_id":"107309","from_type":"task","to_type":"process_memory"}}
-	{"type":"Entity","id":"AAEAAAAAACBSowEAAAAAAAEAAAAykjc2AQAAAAAAAAA=","annotations": {"object_id":"107346","object_type":"file","boot_id":1,"cf:machine_id":"cf:909611570","version":1,"cf:date":"2023:07:24T15:23:42","cf:taint":"0","cf:jiffies":"4295006423","cf:epoch":1,"uid":0,"gid":0,"mode":"0x81b6","secctx":"u:object_r:shell_data_file:s0","ino":4799,"uuid":"e3a9f2df-aaed-46c8-9593-f0262d475eb7"}}
-	{"type":"WasDerivedFrom","from":"AAEAAAAAACBSowEAAAAAAAEAAAAykjc2AQAAAAAAAAA=","to":"AAEAAAAAACBSowEAAAAAAAEAAAAykjc2AAAAAAAAAAA=","annotations": {"id":"AgAAAAAAgIALAAAAAAAAAAEAAAAykjc2AAAAAAAAAAA=","relation_id":"11","relation_type":"version_entity","boot_id":1,"cf:machine_id":"cf:909611570","cf:date":"2023:07:24T15:23:42","epoch":1,"jiffies":"4295006423","allowed":"true","flags":"0","task_id":"107309","from_type":"file","to_type":"file"}}
-	{"type":"WasGeneratedBy","from":"AAEAAAAAACBSowEAAAAAAAEAAAAykjc2AQAAAAAAAAA=","to":"AQAAAAAAAEAtowEAAAAAAAEAAAAykjc2AgAAAAAAAAA=","annotations": {"id":"IAAAAAAAQIAMAAAAAAAAAAEAAAAykjc2AAAAAAAAAAA=","relation_id":"12","relation_type":"write","boot_id":1,"cf:machine_id":"cf:909611570","cf:date":"2023:07:24T15:23:42","epoch":1,"jiffies":"4295006423","allowed":"true","flags":"2","task_id":"107309","from_type":"file","to_type":"task"}}
-	{"type":"Entity","id":"EAAAAAAAABQFFQAAAAAAAAEAAAAykjc2AQAAAAAAAAA=","annotations": {"object_id":"5381","object_type":"machine","boot_id":1,"cf:machine_id":"cf:909611570","version":1,"cf:date":"2023:07:24T15:23:42","cf:taint":"0","cf:jiffies":"4295006389","cf:epoch":1,"u_sysname":"Linux","u_nodename":"localhost","u_release":"5.15.104-maybe-dirty","u_version":"#1 SMP PREEMPT Thu Jan 1 00:00:00 UTC 1970","u_machine":"x86_64","u_domainname":"localdomain","k_version":"0.8.0","l_version":"v0.5.5"}}
-	{"type":"Entity","id":"AABAAAAAACRMq8i4LBprnAEAAAAykjc2AAAAAAAAAAA=","annotations": {"object_id":"11271131271805840204","object_type":"path","boot_id":1,"cf:machine_id":"cf:909611570","version":0,"cf:date":"2023:07:24T15:23:42","cf:taint":"0","cf:jiffies":"4295006405","cf:epoch":1,"pathname":"/data/local/tmp/camflowexample"}}
-	{"type":"Entity","id":"AABAAAAAACTHrMjvSnm7vAEAAAAykjc2AAAAAAAAAAA=","annotations": {"object_id":"13599596862532791495","object_type":"path","boot_id":1,"cf:machine_id":"cf:909611570","version":0,"cf:date":"2023:07:24T15:23:42","cf:taint":"0","cf:jiffies":"4295006409","cf:epoch":1,"pathname":"/local/tmp/HelloFromC.txt"}}
-	{"type":"Activity","id":"AQAAAAAAAEAtowEAAAAAAAEAAAAykjc2AwAAAAAAAAA=","annotations": {"object_id":"107309","object_type":"task","boot_id":1,"cf:machine_id":"cf:909611570","version":3,"cf:date":"2023:07:24T15:23:43","cf:taint":"0","cf:jiffies":"4295006440","cf:epoch":1,"pid":2086,"vpid":2086,"utime":"12846","stime":"38562","vm":"10822056","rss":"2580","hw_vm":"10822356","hw_rss":"2608","rbytes":"0","wbytes":"4096","cancel_wbytes":"0","utsns":4026531838,"ipcns":0,"mntns":4026532864,"pidns":4026531836,"netns":4026531840,"cgroupns":4026531835,"secctx":"u:object_r:unlabeled:s0"}}
-	{"type":"WasInformedBy","from":"AQAAAAAAAEAtowEAAAAAAAEAAAAykjc2AwAAAAAAAAA=","to":"AQAAAAAAAEAtowEAAAAAAAEAAAAykjc2AgAAAAAAAAA=","annotations": {"id":"BAAAAAAAEIANAAAAAAAAAAEAAAAykjc2AAAAAAAAAAA=","relation_id":"13","relation_type":"terminate_task","boot_id":1,"cf:machine_id":"cf:909611570","cf:date":"2023:07:24T15:23:43","epoch":1,"jiffies":"4295006442","allowed":"true","flags":"0","task_id":"34","from_type":"task","to_type":"task"}}
-	{"type":"Entity","id":"AAAIAAAAACAuowEAAAAAAAEAAAAykjc2AQAAAAAAAAA=","annotations": {"object_id":"107310","object_type":"process_memory","boot_id":1,"cf:machine_id":"cf:909611570","version":1,"cf:date":"2023:07:24T15:23:43","cf:taint":"0","cf:jiffies":"4295006442","cf:epoch":1,"uid":0,"gid":0,"tgid":2086,"secctx":"u:r:su:s0"}}
-	{"type":"WasDerivedFrom","from":"AAAIAAAAACAuowEAAAAAAAEAAAAykjc2AQAAAAAAAAA=","to":"AAAIAAAAACAuowEAAAAAAAEAAAAykjc2AAAAAAAAAAA=","annotations": {"id":"ACAAAAAAgIAOAAAAAAAAAAEAAAAykjc2AAAAAAAAAAA=","relation_id":"14","relation_type":"terminate_proc","boot_id":1,"cf:machine_id":"cf:909611570","cf:date":"2023:07:24T15:23:43","epoch":1,"jiffies":"4295006442","allowed":"true","flags":"0","task_id":"34","from_type":"process_memory","to_type":"process_memory"}}
-    	```
-    </details>
-
 3. Using Camflow Android Log Parser to parse and visualize the generated log
 	- **Camflow Log Parser Github Link**: https://github.com/MichaelXi3/android-provenance-parser 
 
-![provG.jpg](https://s2.loli.net/2023/07/29/obi543zrtf2LGXl.jpg)
-    
+	![provG.jpg](https://s2.loli.net/2023/07/29/obi543zrtf2LGXl.jpg)
+   
+
+
 
 ## Built With
 
@@ -371,7 +344,59 @@ This section provides a walk-through of the Camflow Android Provenance System te
 * [AndroidNDK](https://rometools.github.io/rome/) - A cross-compiling tool for compiling code written in C/C++ for Android
 
 
-## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+## Project Structure
 
+At the root directory of the project, there're a few important dictories:
+1. `camflow-config-files`: stores `camflow.ini` and `camflowd.ini` for capture and outpur configurations
+2. `camflow-makefile-example` : provides a sample makefile for android-cuttlefish commands
+3. `prebuilt-userspace-daemons`: provides prebuilt daemons that can be used right away
+4. `app`: is the directory that contains all source codes, specifically, the path is `AndroidStudioProjects/camflow-android-provenance/app/src/main/cpp`
+	```
+	   .
+   ├── CMakeLists.txt
+   ├── camconfd
+   │   ├── CMakeLists.txt
+   │   ├── camconf.h
+   │   ├── config.c
+   │   └── ini
+   ├── camflow-cli
+   │   ├── CMakeLists.txt
+   │   └── camflow.c
+   ├── camflowdd
+   │   ├── CMakeLists.txt
+   │   ├── camflowd-include
+   │   │   ├── service-config.h
+   │   │   └── service-log.h
+   │   ├── ini
+   │   └── main.c
+   ├── example
+   │   ├── CMakeLists.txt
+   │   ├── cp.c
+   │   ├── printf.c
+   │   └── write.c
+   └── provenancelib
+    ├── CMakeLists.txt
+    ├── camflow-dev-include
+    │   ├── provenance_fs.h
+    │   ├── provenance_types.h
+    │   └── provenanceh.h
+    ├── libprovenance-include
+    │   ├── provenance.h
+    │   ├── provenanceSPADEJSON.h
+    │   ├── provenanceW3CJSON.h
+    │   ├── provenance_utils.h
+    │   └── provenancefilter.h
+    ├── libprovenance.c
+    ├── provenanceJSONcommon.h
+    ├── provenanceSPADEJSON.c
+    ├── provenanceW3CJSON.c
+    ├── provenancefilter.c
+    ├── provenanceutils.c
+    ├── relay.c
+    ├── threadpool
+    │   ├── CMakeLists.txt
+    │   ├── thpool.c
+    │   └── thpool.h
+    └── uthash.h
+	```
