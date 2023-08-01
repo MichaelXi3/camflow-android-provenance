@@ -21,7 +21,7 @@ A step by step guide of setting up Camflow Android Provenance System on Android 
 ---
 #### Set Up Android Cuttlefish - Automation
 
-##### Step 1: Navigate to the `android-cuttlefish-automation` folder at the root level of this repository, run the shell script
+##### Step 1: On Linux desktop, clone this repository and navigate to the `android-cuttlefish-automation` folder at the root level of the repository. Then, run the shell script.
 
 ```bash
 source ./create-android-cuttlefish.sh
@@ -106,12 +106,12 @@ This script installs the Android Cuttlefish environment on a Linux-based system.
     ```
 4. Stop cuttlefish virtual machine
     ```bash
-    HOME=$PWD ./bin/stop_cvd
+    pkill run_cvd
     ```
 ---
 #### Build Android Kernel with Camflow Patch applied
 
-##### Step 1: Create a directory for Android kernel build and install  `Repo` command for downloading Android Kernel source code
+##### Step 1: Create a directory for Android kernel build and install  `Repo` command for downloading Android Kernel source code (this directory MUST be separated from Android cuttlefish directory!)
 > `Repo` command page: https://gerrit.googlesource.com/git-repo/+/refs/heads/main/README.md
 
 ```bash
@@ -240,6 +240,7 @@ The option `j12` means that the sync operation will use 12 parallel threads or j
     ```
     
 2. Navigate to `android-cuttlefish/cf`, and then use the following command to launch Cuttlefish using the kernel we just built.
+	> If the launch of cuttlefish failed, try to stop previously launched cuttlefish first by `pkill run_cvd`
    
     ```bash
     HOME=${PWD} ./bin/launch_cvd -daemon -initramfs_path "${DIST_FOLDER}"/initramfs.img -kernel_path "${DIST_FOLDER}"/bzImage -memory_mb 27000 -data_policy always_create -blank_data_image_mb 30000 -cpus 1
@@ -254,7 +255,7 @@ The option `j12` means that the sync operation will use 12 parallel threads or j
     ```bash
     # run cat version before and after the kernel swap, the output should be different
     vsoc_x86_64:/proc $ cat version
-    Linux version 5.15.78-maybe-dirty (build-user@build-host) (Android (8508608, based on r450784e) clang version 14.0.7 (https://android.googlesource.com/toolchain/llvm-project 4c603efb0cca074e9238af8b4106c30add4418f6), LLD 14.0.7)
+    Linux version 5.15.120-maybe-dirty (build-user@build-host) (Android (8508608, based on r450784e) clang version 14.0.7 (https://android.googlesource.com/toolchain/llvm-project 4c603efb0cca074e9238af8b4106c30add4418f6), LLD 14.0.7) #1 SMP PREEMPT Thu Jan 1 00:00:00 UTC 1970
     ```
 
 ---
@@ -271,11 +272,11 @@ The option `j12` means that the sync operation will use 12 parallel threads or j
 > - **camflowd.ini**: output configuration file that specifies what and where the provenance information is published. (Currently only support log output in **SPADE JSON** format )
 
 ##### Step 1: Build Camflow Android User-Space Daemons in Android Studio
-1. `git clone` this repo to Desktop
+1. On Mac or Linux desktop, `git clone` this repo to Desktop and open this folder in Android Studio (Proceed to next step if you have already cloned the repository)
 ```bash
 git clone https://github.com/MichaelXi3/camflow-android-provenance.git
 ```
-2. Click `Build` button on the top right corner of Android Studio
+2. Click the green `Build` button on the top right corner of Android Studio
 ```
 BUILD SUCCESSFUL in 13s
 43 actionable tasks: 43 executed
@@ -296,7 +297,7 @@ camconfd     camflow-cli     camflowd     camflowexample     libprovenance.so
 3. Navigate to `android-cuttlefish/cf`, enter the following commands to launch the Android virtual device with specified configurations
 	```bash
 	# stop the previous launched Android virtual device if there is any
-	HOME=$PWD ./bin/stop_cvd
+	pkill run_cvd
 	```
 	```bash
 	# set DIST_FOLDER to the directory that contains bzImage and initramfs.img
@@ -307,15 +308,15 @@ camconfd     camflow-cli     camflowd     camflowexample     libprovenance.so
 	HOME=${PWD} ./bin/launch_cvd -daemon -memory_mb 27000 -data_policy always_create -blank_data_image_mb 30000 -cpus 1 -initramfs_path "${DIST_FOLDER}"/initramfs.img -kernel_path "${DIST_FOLDER}"/bzImage
 	```
 3. Install the shared library and user-space daemons to Android Cuttlefish
-	> **Encapsulating and automating these commands in a Makefile is highly recommended**. Example of Makefile is provided at the appendix folder in this repo.
+	> **Using Makefile commands to automate is recommended**. A Makefile has been placed at `android-cuttlefish/cf` directory, you can use it right away or modify it to your needs.
 	
+	**First:  `make remount-all`**, or use following commands
     ```bash
     # remount Android cuttlefish device - need to install shared library
     ./bin/adb root
     ./bin/adb remount
     ./bin/adb reboot
-    ```
-    ```bash
+
     # mount several filesystem in Android cuttlefish device
     # if encounter 'Device or resource busy' error, wait a minute and try again
     ./bin/adb root
@@ -323,6 +324,9 @@ camconfd     camflow-cli     camflowd     camflowexample     libprovenance.so
     ./bin/adb shell mount -t debugfs /sys/kernel/debugfs
     ./bin/adb shell mount -o rw,remount /system
     ```
+    
+   **Second:  `make prepare`**, assume everything is located at `/Downloads` directory
+   > Checklist of what you need in `/Downloads` directory: `camconfd`, `camflow-cli`, `camflowd`, `1ibprovenance.so`, `camflowexample`, `camflow.ini`, `camflowd.ini`
     ```bash
     # install user-space daemons to android cuttlefish /data/local/tmp
     ./bin/adb push /path/to/Downloads/camflowd /data/local/tmp
@@ -348,17 +352,28 @@ camconfd     camflow-cli     camflowd     camflowexample     libprovenance.so
 ##### Step 3: Run User-Space Daemons to Capture Provenance of Android System
 1. Run the `camconfd` daemon to set the capture configuration. Note that in the default `camflow.ini`, the capture-all provenance is set to false since there will be massive provenance data generated if capture-all is set to true. You can fine-tune the capture policy later by modifying the configurations listed in `camflow.ini`.
 	```bash
-	./bin/adb shell /data/local/tmp/camconfd &
+	./bin/adb shell /data/local/tmp/camconfd & # or, make run-camconfd
 	```
 2. Run the `camflowd` daemon to record the provenance captured in the kernel and serialize them to SPADE JSON format log in `/data/local/tmp/audit.log file`.
 	```bash
-	./bin/adb shell /data/local/tmp/camflowd &
+	./bin/adb shell /data/local/tmp/camflowd & # or, make run-camflowd
 	```
 3. Now there should a file called `audit.log` locates at `/data/local/tmp/` that contains provenance log entries. Note that the log may be empty if your capture configuration is set to not capture anything, as defined in the default `camflow.ini`.
+	```bash
+	# enter android cuttlefish shell as root
+	make root && make shell
+	cd /data/local/tmp
+	vi audit.log
 	```
-	{"type":"Entity","id":"EAAAAAAAABQFFQAAAAAAAAAAAAAAAAAAAQAAAAAAAAA=","annotations": {"object_id":"5381","object_type":"machine","boot_id":0,"cf:machine_id":"cf:0","version":1,"cf:date":"2023:07:24T15:23:35","cf:taint":"0","cf:jiffies":"0","cf:epoch":0,"u_sysname":"Linux","u_nodename":"(none)","u_release":"5.15.104-maybe-dirty","u_version":"#1 SMP PREEMPT Thu Jan 1 00:00:00 UTC 1970","u_machine":"x86_64","u_domainname":"(none)","k_version":"0.8.0","l_version":"v0.5.5"}}
+	```bash
+	# the provenance log should be something similar to the following
+{"type":"Entity","id":"EAAAAAAAABQFFQAAAAAAAAAAAAAAAAAAAQAAAAAAAAA=","annotations": {"object_id":"5381","object_type":"machine","boot_id":0,"cf:machine_id":"cf:0","version":1,"cf:date":"2023:07:24T15:23:35","cf:taint":"0","cf:jiffies":"0","cf:epoch":0,"u_sysname":"Linux","u_nodename":"(none)","u_release":"5.15.104-maybe-dirty","u_version":"#1 SMP PREEMPT Thu Jan 1 00:00:00 UTC 1970","u_machine":"x86_64","u_domainname":"(none)","k_version":"0.8.0","l_version":"v0.5.5"}}
 	```
-
+	```bash
+	# to copy the provenance log file to /Documents directory
+	exit         # exit android cuttlefish shell, now you should at ~/android-cuttlefish/cf
+	make pull    # pull audit.log from cuttlefish to local machine
+	```
 
 
 ## Running Tests
@@ -371,12 +386,12 @@ This section provides a walk-through of the Camflow Android Provenance System te
     - In the `camflowexample` executable, it turns on the `track-me` bit, so that this process can be tracked.
     ```bash
     # execute this command at /android-cuttlefish/cf
-    ./bin/adb shell /data/local/tmp/camflowexample
+    ./bin/adb shell /data/local/tmp/camflowexample    # or, make run-example
     ```
 2. Check out the provenance log generated in `audit.log`
     ```bash
     # enter the android cuttlefish commandline interface
-    ./bin/adb shell
+    ./bin/adb shell      # or, make shell
     cd /data/local/tmp
     vi audit.log
     ```
@@ -402,6 +417,8 @@ At the root directory of the project, there're a few important dictories:
 1. `camflow-config-files`: stores `camflow.ini` and `camflowd.ini` for capture and outpur configurations
 2. `camflow-makefile-example` : provides a sample makefile for android-cuttlefish commands
 3. `prebuilt-userspace-daemons`: provides prebuilt daemons that can be used right away
+4. `android-cuttlefish-automation`: provides the shell script that automates the android cuttlefish launch
+5. `kernel-config-setting-shell`: provides shell script that modifies android kernel build configs, for backup purposes
 4. `app`: is the directory that contains all source codes, specifically, the path is `AndroidStudioProjects/camflow-android-provenance/app/src/main/cpp`
 	```
 	   .

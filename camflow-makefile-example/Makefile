@@ -72,7 +72,7 @@ run: run-camconfd run-camflowd run-example
 
 stop:
 	@echo "stop previous cuttlefish device"
-	HOME=$$PWD ${ADB} stop_cvd
+	pkill run_cvd
 	@echo "cuttlefish device stop, done"
 
 shell:
