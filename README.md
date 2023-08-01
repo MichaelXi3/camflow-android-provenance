@@ -19,8 +19,30 @@ These instructions will guide you through building and installing Camflow Androi
 A step by step guide of setting up Camflow Android Provenance System on Android virtual device.
 
 ---
-#### Set Up Android Cuttlefish
-> For the lastest instructions, check: https://android.googlesource.com/device/google/cuttlefish/
+#### Set Up Android Cuttlefish - Automation
+
+##### Step 1: Navigate to the `android-cuttlefish-automation` folder at the root level of this repository, run the shell script
+
+```bash
+source ./create-android-cuttlefish.sh
+```
+
+During Step 2 of the process, your laptop will **reboot**. Once the reboot is complete, simply execute the shell script again. The progress will be tracked, and previously completed commands will not be re-run. The reason for the reboot is to trigger the installation of additional kernel modules and the application of udev rules.
+
+##### Step 2: Interact with Android Cuttlefish using Makefile
+
+After executing the shell script, you should be located in the `~android-cuttlefish/cf` directory. The script also copied a Makefile to this directory to help you interact with the Android Cuttlefish virtual device. The commands are described as follows:
+
+```bash
+make shell                  # enter the shell of Android Cuttlefish
+make root                   # running as root
+make stop                   # stop the cuttlefish device
+HOME=$PWD ./bin/launch_cvd  # launch a new cuttlefish virtual device
+```
+---
+#### Set Up Android Cuttlefish - Manual
+
+> **If you used "*Set Up Android Cuttlefish - Automation*", you can skip this part.** For the lastest manual launch instructions, check: https://android.googlesource.com/device/google/cuttlefish/
 
 ##### Step 1: In Linux desktop or virtual machine, make sure virtualization with KVM is available
 
@@ -126,7 +148,7 @@ The option `j12` means that the sync operation will use 12 parallel threads or j
 1. Download Camflow kernel patch from Camflow repository
 	- Camflow is a major LSM for Linux kernel Provenance
 	- Download one of the release of Camflow from the link above, in this example, we use `Camflow v0.8.0` since it's compatible with Android Kernel branch `android13-5.15-LTS`
-	- The link of Camflow v0.8.0 patch releases is: [Link](https://github.com/CamFlow/camflow-dev/releases/tag/v0.8.0)
+	- The link of `Camflow v0.8.0` patch releases is: [Link](https://github.com/CamFlow/camflow-dev/releases/tag/v0.8.0)
 2. Install Camflow kernel patch to kernel source code before building it
 	- Apply the two Camflow patches to the `common` kernel source code directory
     ```bash
@@ -143,6 +165,12 @@ The option `j12` means that the sync operation will use 12 parallel threads or j
 	![camflow-config2](https://s2.loli.net/2023/07/29/MaABjHfgT9mzusN.png)
 	![camflow-config3](https://s2.loli.net/2023/07/29/tLJuprdmaMlGkE6.png)
 	- Make sure the "provenance" is added at the end of enabled LSMs list
+
+4. Download and run this shell script to modify the `gki_defconfig` to avoid the savedefconfig mismatch error
+	```bash
+	gdown --id 1x2fLFHlr_UtoCa0_MmHSWHLkiDBnZrNe
+	source ./modify-build-configs.sh
+	```
 
 ##### Step 4: Build the Android Kernel
 > Since Android 10, Android has introduced a new **[Generic Kernel Image(GKI)](https://source.android.com/devices/architecture/kernel/generic-kernel-image)** in kernel 4.19 and above. This means that the kernel building process has been divided into two parts: `Generic Kernel` and `Vendor Modules`. We have to build these two parts separately.
@@ -182,7 +210,7 @@ The option `j12` means that the sync operation will use 12 parallel threads or j
 ---
 #### Swap the Cutomized Android Kernel into Android Cuttlefish Virtual Device
 
-1. Set the environment variable `DIST_FOLDER` as the folder that contains `initramfs.img` and `bzImage`
+1. In `/android-cuttlefish/cf` directory, set the environment variable `DIST_FOLDER` as the folder that contains `initramfs.img` and `bzImage`
    
     ```bash
     DIST_FOLDER=$(readlink -f /path/to/android-kernel-5.15/vendor-build-output-x86)
