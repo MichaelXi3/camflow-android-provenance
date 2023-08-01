@@ -170,6 +170,7 @@ The option `j12` means that the sync operation will use 12 parallel threads or j
 > If the `gdown` command is not working, you can obtain this shell script from the `kernel-config-setting-shell` directory at the root level of this repository.
 
   ```bash
+  cd android-kernel-5.15
   gdown --id 1x2fLFHlr_UtoCa0_MmHSWHLkiDBnZrNe
   source ./modify-build-configs.sh
   ```
