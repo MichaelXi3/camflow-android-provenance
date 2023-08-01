@@ -245,7 +245,7 @@ The option `j12` means that the sync operation will use 12 parallel threads or j
     ```bash
     HOME=${PWD} ./bin/launch_cvd -daemon -initramfs_path "${DIST_FOLDER}"/initramfs.img -kernel_path "${DIST_FOLDER}"/bzImage -memory_mb 27000 -data_policy always_create -blank_data_image_mb 30000 -cpus 1
     ```
-    
+   
 3. Launch the shell of cuttlefish and check the kernel version to verify that kernel is swapped successfully
    
     ```bash
@@ -285,6 +285,9 @@ All the executables should be located at:
 ```
 /Desktop/camflow-android-provenance/app/build/intermediates/cxx/Debug/k4r535v6/obj/x86_64
 ```
+```bash
+cd app/build/intermediates/cxx/Debug/k4r535v6/obj/x86_64
+```
 The executable and shared library list should include:
 ```
 camconfd     camflow-cli     camflowd     camflowexample     libprovenance.so
@@ -316,7 +319,7 @@ camconfd     camflow-cli     camflowd     camflowexample     libprovenance.so
     ./bin/adb root
     ./bin/adb remount
     ./bin/adb reboot
-
+   
     # mount several filesystem in Android cuttlefish device
     # if encounter 'Device or resource busy' error, wait a minute and try again
     ./bin/adb root
@@ -324,7 +327,7 @@ camconfd     camflow-cli     camflowd     camflowexample     libprovenance.so
     ./bin/adb shell mount -t debugfs /sys/kernel/debugfs
     ./bin/adb shell mount -o rw,remount /system
     ```
-    
+   
    **Second:  `make prepare`**, assume everything is located at `/Downloads` directory
    > Checklist of what you need in `/Downloads` directory: `camconfd`, `camflow-cli`, `camflowd`, `1ibprovenance.so`, `camflowexample`, `camflow.ini`, `camflowd.ini`
     ```bash
@@ -367,7 +370,7 @@ camconfd     camflow-cli     camflowd     camflowexample     libprovenance.so
 	```
 	```bash
 	# the provenance log should be something similar to the following
-{"type":"Entity","id":"EAAAAAAAABQFFQAAAAAAAAAAAAAAAAAAAQAAAAAAAAA=","annotations": {"object_id":"5381","object_type":"machine","boot_id":0,"cf:machine_id":"cf:0","version":1,"cf:date":"2023:07:24T15:23:35","cf:taint":"0","cf:jiffies":"0","cf:epoch":0,"u_sysname":"Linux","u_nodename":"(none)","u_release":"5.15.104-maybe-dirty","u_version":"#1 SMP PREEMPT Thu Jan 1 00:00:00 UTC 1970","u_machine":"x86_64","u_domainname":"(none)","k_version":"0.8.0","l_version":"v0.5.5"}}
+	{"type":"Entity","id":"EAAAAAAAABQFFQAAAAAAAAAAAAAAAAAAAQAAAAAAAAA=","annotations": {"object_id":"5381","object_type":"machine","boot_id":0,"cf:machine_id":"cf:0","version":1,"cf:date":"2023:07:24T15:23:35","cf:taint":"0","cf:jiffies":"0","cf:epoch":0,"u_sysname":"Linux","u_nodename":"(none)","u_release":"5.15.104-maybe-dirty","u_version":"#1 SMP PREEMPT Thu Jan 1 00:00:00 UTC 1970","u_machine":"x86_64","u_domainname":"(none)","k_version":"0.8.0","l_version":"v0.5.5"}}
 	```
 	```bash
 	# to copy the provenance log file to /Documents directory
