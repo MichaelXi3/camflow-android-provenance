@@ -115,11 +115,11 @@ This script installs the Android Cuttlefish environment on a Linux-based system.
 > `Repo` command page: https://gerrit.googlesource.com/git-repo/+/refs/heads/main/README.md
 
 ```bash
-  # Debian/Ubuntu.
-  $ sudo apt-get install repo
+# Debian/Ubuntu
+$ sudo apt-get install repo
 
-  # Gentoo.
-  $ sudo emerge dev-vcs/repo
+# Gentoo
+$ sudo emerge dev-vcs/repo
 ```
 Or install manually by the following code:
 ```bash
@@ -166,11 +166,13 @@ The option `j12` means that the sync operation will use 12 parallel threads or j
 	![camflow-config3](https://s2.loli.net/2023/07/29/tLJuprdmaMlGkE6.png)
 	- Make sure the "provenance" is added at the end of enabled LSMs list
 
-4. Download and run this shell script to modify the `gki_defconfig` to avoid the savedefconfig mismatch error
-	```bash
-	gdown --id 1x2fLFHlr_UtoCa0_MmHSWHLkiDBnZrNe
-	source ./modify-build-configs.sh
-	```
+4. Download and run this shell script to modify the `gki_defconfig` to **avoid the savedefconfig mismatch error**
+> If the `gdown` command is not working, you can obtain this shell script from the `kernel-config-setting-shell` directory at the root level of this repository.
+
+  ```bash
+  gdown --id 1x2fLFHlr_UtoCa0_MmHSWHLkiDBnZrNe
+  source ./modify-build-configs.sh
+  ```
 
 ##### Step 4: Build the Android Kernel
 > Since Android 10, Android has introduced a new **[Generic Kernel Image(GKI)](https://source.android.com/devices/architecture/kernel/generic-kernel-image)** in kernel 4.19 and above. This means that the kernel building process has been divided into two parts: `Generic Kernel` and `Vendor Modules`. We have to build these two parts separately.
@@ -185,6 +187,19 @@ The option `j12` means that the sync operation will use 12 parallel threads or j
     # bazel build
     tools/bazel build //common:kernel_x86_64_dist
     ```
+    Successfully build should output following message:
+    ```
+    INFO: From Building GKI artifacts //common:kernel_x86_64_gki_artifacts:
+    Creating boot-img.tar.gz for gki-info.txt boot.img
+    INFO: From Building system_dlkm //common:kernel_x86_64_images_system_dlkm_image:
+    ========================================================
+    Creating system_dlkm image
+    Target //common:kernel_x86_64_dist up-to-date:
+    bazel-bin/common/kernel_x86_64_dist
+    INFO: Elapsed time: 1377.103s, Critical Path: 1356.84s
+    INFO: 253 processes: 239 internal, 14 linux-sandbox.
+    INFO: Build completed successfully, 253 total actions
+    ```
 
     ```bash
     # create output distribution
@@ -192,17 +207,25 @@ The option `j12` means that the sync operation will use 12 parallel threads or j
     ```
     
 2. **Build Vendor Modules for the Virtual Device**
-        
     ```bash
     # bazel build
     tools/bazel build //common-modules/virtual-device:virtual_device_x86_64_dist
+    ```
+    
+    Successfully build should output following message:
+    ```
+    Target //common-modules/virtual-device:virtual_device_x86_64_dist up-to-date:
+    bazel-bin/common-modules/virtual-device/virtual_device_x86_64_dist
+	INFO: Elapsed time: 185.179s, Critical Path: 183.47s
+	INFO: 24 processes: 13 internal, 11 linux-sandbox.
+	INFO: Build completed successfully, 24 total actions
     ```
 
     ```bash
     # create output distribution
     tools/bazel run //common-modules/virtual-device:virtual_device_x86_64_dist -- --dist_dir=/path/to/android-kernel-5.15/vendor-build-output-x86
     ```
-	Upon successful completion of the build, `initramfs.img` and `bzImage` should be located at /path/to/android-kernel-5.15/vendor-build-output-x86. You can now proceed to swap this kernel into your Cuttlefish Android Virtual Device.
+	Upon successful completion of the build, `initramfs.img` and `bzImage` should be located at `/path/to/android-kernel-5.15/vendor-build-output-x86`. You can now proceed to swap this kernel into your Cuttlefish Android Virtual Device.
 
 	- `initramfs.img`: the initial RAM filesystem is a temporary in-memory file system that contains essential files and utilities required for mounting the root file system. It is compressed and stored as an image file with name: `initramfs.img`.
 	- `bzImage`: the `bzImage` is a compressed Linux kernel image created during the kernel compilation process. It is designed to be small enough to fit within limited memory space during the boot process. The `bzImage` is loaded by the bootloader, decompressed, and executed to initialize the system hardware and kernel before transitioning to the root file system.
@@ -219,13 +242,13 @@ The option `j12` means that the sync operation will use 12 parallel threads or j
 2. Navigate to `android-cuttlefish/cf`, and then use the following command to launch Cuttlefish using the kernel we just built.
    
     ```bash
-    HOME=${PWD} ./bin/launch_cvd -daemon -initramfs_path "${DIST_FOLDER}"/initramfs.img -kernel_path "${DIST_FOLDER}"/bzImage
+    HOME=${PWD} ./bin/launch_cvd -daemon -initramfs_path "${DIST_FOLDER}"/initramfs.img -kernel_path "${DIST_FOLDER}"/bzImage -memory_mb 27000 -data_policy always_create -blank_data_image_mb 30000 -cpus 1
     ```
     
 3. Launch the shell of cuttlefish and check the kernel version to verify that kernel is swapped successfully
    
     ```bash
-    ./bin/adb shell
+    ./bin/adb shell  # alternatively, make shell
     ```
     
     ```bash
