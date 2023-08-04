@@ -47,15 +47,17 @@ if [ ! -f "${FLAG_DIR}/step3_complete" ]; then
     mkdir cf
     # Install gdown if not already installed
     pip install gdown --quiet
-    # Replace with the actual file IDs
+    # File ID of two large files
     FILE_ID_1=1va_j0k4NaklRoQtdfhnqYGuOa-SY9f7-
     FILE_ID_2=1HCH7EAFcwtQ3qtYuwnvC0DemtSbBLoJb
-    MAKE_FILE_ID=1TuuRz8B8eml_p7EdYCkdWs5K6cPoou2U
     gdown --id ${FILE_ID_1} -O cf/cvd-host_package.tar.gz
     gdown --id ${FILE_ID_2} -O cf/aosp_cf_x86_64_phone-img-10586990.zip
-    gdown --id ${MAKE_FILE_ID} -O cf/Makefile
     tar xvf cf/cvd-host_package.tar.gz -C cf/
     unzip cf/aosp_cf_x86_64_phone-img-10586990 -d cf/
+    # Prepare makefile
+    git clone https://github.com/MichaelXi3/android-cuttlefish-makefile.git
+    cd android-cuttlefish-makefile && cp Makefile ../cf && cd ../cf
+    rm -rf android-cuttlefish-makefile
     touch ${FLAG_DIR}/step3_complete
 fi
 
@@ -66,6 +68,3 @@ rm -rf ${FLAG_DIR}
 echo "Step 4: Launching cuttlefish..."
 cd cf
 HOME=$PWD ./bin/launch_cvd --daemon
-sleep 30
-./bin/adb root
-./bin/adb shell
