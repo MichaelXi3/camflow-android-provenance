@@ -56,8 +56,7 @@ if [ ! -f "${FLAG_DIR}/step3_complete" ]; then
     unzip cf/aosp_cf_x86_64_phone-img-10586990 -d cf/
     # Prepare makefile
     git clone https://github.com/MichaelXi3/android-cuttlefish-makefile.git
-    cd android-cuttlefish-makefile && cp Makefile ../cf && cd ../cf
-    rm -rf android-cuttlefish-makefile
+    cd android-cuttlefish-makefile && cp Makefile ../cf && cd .. && rm -rf android-cuttlefish-makefile && cd cf
     touch ${FLAG_DIR}/step3_complete
 fi
 
