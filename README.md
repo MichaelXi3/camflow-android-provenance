@@ -180,10 +180,10 @@ The option `j12` means that the sync operation will use 12 parallel threads or j
 ##### Step 4: Build the Android Kernel
 > Since Android 10, Android has introduced a new **[Generic Kernel Image(GKI)](https://source.android.com/devices/architecture/kernel/generic-kernel-image)** in kernel 4.19 and above. This means that the kernel building process has been divided into two parts: `Generic Kernel` and `Vendor Modules`. We have to build these two parts separately.
 > 
-> ![kernel.png](https://s2.loli.net/2023/05/09/4iUwsP7QLefFHTx.png)
 > - **GKI modules**: Kernel modules built by Google that can be dynamically loaded on devices where applicable. These modules are built as artifacts of the GKI kernel and are delivered alongside GKI as the `system_dlkm_staging_archive.tar.gz` archive.
 > - **Vendor module**: A hardware-specific module developed by a partner and that contains system on a chip (SoC) and device-specific functionality. A vendor module is a type of dynamically loadable kernel module.
 
+![kernel.png](https://s2.loli.net/2023/10/16/omuE5MUhBfcW6Dp.png)
 
 1. **Build Generic Kernel**
     ```bash
@@ -267,16 +267,16 @@ The option `j12` means that the sync operation will use 12 parallel threads or j
 
 ---
 #### Set Up Camflow Android User-Space Daemons
-
-> CamFlow provenance system consists of kernel space capture mechanism and user space daemons. The architecture is described below. For more information, check [camflow.org](https://camflow.org/#overview).
+> CamFlow provenance system consists of kernel space capture mechanism and user space daemons. The architecture is described below. For more information, check [camflow.org](https://camflow.org/#overview)
 > 
-> ![camflow.png](https://s2.loli.net/2023/07/29/qeCQIR7WEL1TfGn.png)
 > - **camflowd**: is a daemon responsible for recording the provenance captured in the kernel by CamFlow. Provenance records are published by CamFlow to pseudo-files in relayfs. The daemon retrieves these records, serializes them to a format specified in the configuration, and writes them to an output specified in the configuration.
 > - **camconfd**: camconfd is a daemon charged with configuring the in-kernel capture mechanism. The configuration daemon reads from `camflow.ini` and loads the specified configuration into the kernel via a securityfs interface. 
 > - **libprovenance**: a C library implementing userspace utility functions to interact with CamFlow relayfs and securityfs interfaces.
 > - **camflow-cli**: CLI that allows the user to dynamically modify the capture configuration through the command line.
 > - **camflow.ini**: captures configuration file read during the boot process by the camconfd service, and is used to set the capture policy.
 > - **camflowd.ini**: output configuration file that specifies what and where the provenance information is published. (Currently only support log output in **SPADE JSON** format )
+
+![camflow.png](https://s2.loli.net/2023/10/16/Hylx7Mi2LVDGwZz.png)
 
 ##### Step 1a:  Using Prebuilt Camflow Android User-Space Daemons
 
